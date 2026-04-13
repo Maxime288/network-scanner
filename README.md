@@ -1,33 +1,72 @@
-🔍 Mini Network ScannerOutil de reconnaissance réseau — Pentest / Offensive SecurityPython 3 · Aucune dépendance · Kali Linux ready📋 DescriptionScanner réseau minimaliste développé pour simuler les fonctionnalités essentielles de Nmap sans aucune dépendance externe. Le script utilise les bibliothèques standards de Python pour effectuer des opérations de reconnaissance rapide :Découverte d'hôtes : Identification des machines actives sur une plage CIDR via ping sweep TCP.Scan de ports : Analyse multi-threadée des ports TCP.Banner Grabbing : Récupération des bannières pour l'identification des services.Estimation d'OS : Détection heuristique du système d'exploitation basée sur le TTL.Résolution DNS : Identification des noms d'hôtes (Reverse DNS).Export flexible : Sortie console formatée ou export JSON structuré.⚙️ UtilisationPrérequisPython 3.10 ou supérieur.Droits administrateur (recommandé sur Kali pour une meilleure précision du TTL).InstallationBashgit clone https://github.com/votre-repo/network-scanner.git
-cd network-scanner
+# 🔍 Mini Network Scanner
+
+> Outil de reconnaissance réseau — Pentest / Offensive Security  
+> Python 3 · Aucune dépendance · Kali Linux ready
+
+![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-557C94?logo=kalilinux&logoColor=white)
+![Category](https://img.shields.io/badge/Category-Reconnaissance-red)
+![Dependencies](https://img.shields.io/badge/Dependencies-none-brightgreen)
+
+---
+
+## 📋 Description
+
+Scanner réseau minimaliste développé dans le cadre de labs de sécurité offensive. Reproduit les fonctionnalités essentielles de Nmap sans dépendance externe :
+
+- **Découverte d'hôtes actifs** sur une plage CIDR via un balayage TCP.
+- **Scan de ports TCP** multi-threadé pour une exécution rapide.
+- **Banner grabbing** et identification de services (SSH, HTTP, FTP, Redis, etc.).
+- **Estimation du système d'exploitation** via l'analyse du TTL (fingerprinting heuristique).
+- **Résolution DNS inverse** (Hostname lookup).
+- **Export JSON** pour intégration dans des rapports ou pipelines d'audit.
+
+---
+
+## 📁 Structure
+
+```text
+Offensive-Security-Labs/
+└── Pentest/
+    └── docs/
+        ├── README.md                ← ce fichier
+        └── network_scanner.py       ← script principal
+⚙️ UtilisationPrérequisBashpython3 --version   # Python 3.10+ recommandé
+# Aucune installation supplémentaire nécessaire (librairies standards uniquement)
+InstallationBashgit clone [https://github.com/votre-repo/Offensive-Security-Labs.git](https://github.com/votre-repo/Offensive-Security-Labs.git)
+cd Offensive-Security-Labs/Pentest/docs/
 chmod +x network_scanner.py
-Commandes usuellesBash# Scan par défaut (ports communs) sur une cible unique
+CommandesBash# Scan basique (ports courants) sur une IP cible
 python3 network_scanner.py -t 192.168.1.1
 
-# Scan complet d'un sous-réseau avec 200 threads
-python3 network_scanner.py -t 192.168.1.0/24 --threads 200
+# Scan d'un réseau entier (CIDR)
+python3 network_scanner.py -t 192.168.1.0/24
 
-# Scan d'une plage de ports spécifique
+# Scan de ports personnalisés (plage ou liste)
 python3 network_scanner.py -t 192.168.1.1 -p 1-1024
+python3 network_scanner.py -t 192.168.1.1 -p 22,80,443,3306
 
-# Export des résultats au format JSON
-python3 network_scanner.py -t 192.168.1.1 --json > rapport.json
-🛠️ ParamètresParamètreDéfautDescription-t, --target(requis)IP unique ou plage CIDR (ex: 192.168.1.0/24)-p, --portscommonPlage (1-1024), liste (22,80), ou common--threads100Nombre de threads simultanés--timeout1.0Délai d'attente par port en secondes--jsonFalseActive la sortie au format JSON--no-discoveryFalseScanne les ports sans vérifier si l'hôte répond au ping🖥️ Exemple de sortiePlaintext═════════════════════════════════════════════════════════════════
+# Export JSON
+python3 network_scanner.py -t 192.168.1.1 --json > result.json
+
+# Scan rapide (Threads augmentés et timeout réduit)
+python3 network_scanner.py -t 10.0.0.0/24 -p 1-1024 --threads 200 --timeout 0.5
+🛠️ ParamètresParamètreDéfautDescription-t / --target(requis)IP unique ou plage CIDR (ex: 192.168.1.0/24)-p / --portscommonPlage 1-1024, liste 80,443, ou common--threads100Nombre de threads en parallèle--timeout1.0Temps d'attente par port en secondes--json—Sortie brute au format JSON uniquement--no-discovery—Ignorer l'étape de ping sweep (scan direct)🖥️ Exemple de sortiePlaintext═════════════════════════════════════════════════════════════════
   RAPPORT DE SCAN RÉSEAU
 ═════════════════════════════════════════════════════════════════
 
-  Hôte   : 192.168.1.15  (workstation.local)
+  Hôte   : 192.168.1.1  (router.local)
   OS     : Linux/macOS (TTL≤64)
-  Scanné : 2026-04-14T00:12:45
+  Scanné : 2026-04-14T14:32:01
 
   PORT     SERVICE            LATENCE  BANNER
   ────────────────────────────────────────────────────────────
-  22       SSH                  2.4ms  SSH-2.0-OpenSSH_8.9p1
-  80       HTTP                 1.1ms  HTTP/1.1 200 OK
-  443      HTTPS                1.5ms 
-  6379     Redis                0.9ms  redis_version:7.0.5
+  22       SSH                  3.2ms  SSH-2.0-OpenSSH_9.2p1
+  80       HTTP                 1.8ms  HTTP/1.1 200 OK
+  443      TLS/SSL              2.1ms
+  3306     MySQL                5.1ms
 
 ═════════════════════════════════════════════════════════════════
   Résumé : 1 hôte(s) scanné(s), 4 port(s) ouvert(s)
 ═════════════════════════════════════════════════════════════════
-🔬 Comparaison TechniqueFonctionnalitéCe ScriptNmapScan TCP Connect✅✅Banner Grabbing✅✅Détection OS (TTL)✅✅Multi-threading✅✅Scan furtif (SYN)❌✅Scripting Engine (NSE)❌✅⚠️ Avertissement légalCet outil est destiné exclusivement à des fins éducatives et à des audits de sécurité autorisés. L'utilisateur est seul responsable de l'usage fait de ce script. Le scan de réseaux sans autorisation est illégal.
+🔬 Comparaison avec NmapFonctionnalitéCe scriptNmapDécouverte d'hôtes TCP✅✅Scan TCP Connect✅✅Banner grabbing✅✅Détection OS (TTL)✅✅Scan SYN (Stealth)❌✅Scan UDP❌✅Dépendances externes❌✅⚠️ Avertissement légalCet outil est destiné exclusivement à des usages légitimes dans des environnements contrôlés (labs isolés, CTF, audits internes autorisés). Le scan de ports non autorisé est illégal. Utilisez cet outil uniquement sur des systèmes dont vous avez l'autorisation explicite.
