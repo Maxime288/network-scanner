@@ -29,12 +29,10 @@ Outil de reconnaissance réseau en Python pur, conçu pour des environnements de
 ## 📁 Structure du projet
 
 ```
-Offensive-Security-Labs/
-└── Pentest/
-    └── docs/
-        ├── README.md                ← ce fichier
-        ├── Rapport_scanner.pdf      ← rapport technique complet
-        └── network_scanner.py       ← script principal
+network-scanner/
+├── README.md                ← ce fichier
+├── Rapport_scanner.pdf      ← rapport technique complet
+└── network_scanner.py       ← script principal
 ```
 
 ---
@@ -47,16 +45,11 @@ Offensive-Security-Labs/
 python3 --version   # 3.10+ requis — aucune installation supplémentaire
 ```
 
-### Cloner uniquement ce dossier (sparse-checkout)
+### Cloner le dépôt
 
 ```bash
-git clone --no-checkout https://github.com/Maxime288/Offensive-Security-Labs.git
-cd Offensive-Security-Labs
-git sparse-checkout init --cone
-git sparse-checkout set Pentest/docs
-git checkout main
-
-cd Pentest/docs/
+git clone https://github.com/Maxime288/network-scanner.git
+cd network-scanner
 python3 network_scanner.py --help
 ```
 
