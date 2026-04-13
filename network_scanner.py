@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 🛡️ PyNet-Scanner Pro
-Un scanner réseau élégant et rapide pour la reconnaissance offensive.
+Scanner réseau haute performance avec détection d'OS améliorée.
 """
 
 import socket
@@ -45,8 +45,8 @@ BANNER = f"""
 {C.CYAN} |  ___/ | | | '_ \  {C.BLUE}| . ` |/ _ \ __|{C.RESET}
 {C.CYAN} | |   | |_| | | | | {C.BLUE}| |\  |  __/ |_ {C.RESET}
 {C.CYAN} |_|    \__, |_| |_| {C.BLUE}|_| \_|\___|\__|{C.RESET}
-{C.CYAN}         __/ |       {C.GRAY}Network Scanner{C.RESET}
-{C.CYAN}        |___/        {C.GRAY}v2.0 - Security Labs{C.RESET}
+{C.CYAN}         __/ |       {C.GRAY}Network Scanner Pro{C.RESET}
+{C.CYAN}        |___/        {C.GRAY}v2.1 - Security Labs{C.RESET}
 """
 
 # ──────────────────────────────────────────────────────────────
@@ -78,6 +78,7 @@ class Progress:
             self._render()
 
     def _render(self):
+        if self.total == 0: return
         pct = self.current / self.total
         bar = "━" * int(20 * pct) + "─" * (20 - int(20 * pct))
         sys.stderr.write(f"\r  {C.GRAY}{self.label:<15}{C.RESET} {C.BLUE}▕{bar}▏{C.RESET} {C.BOLD}{int(pct*100)}%{C.RESET} ")
@@ -85,11 +86,11 @@ class Progress:
         if self.current >= self.total: sys.stderr.write("\n")
 
 # ──────────────────────────────────────────────────────────────
-# Logique de Scan
+# Logique de Scan et Détection
 # ──────────────────────────────────────────────────────────────
 
 def ping_host(ip: str, timeout: float = 1.0) -> bool:
-    """Vérifie si un hôte est en ligne via TCP."""
+    """Vérifie si un hôte est actif via une tentative de connexion TCP."""
     for port in [80, 443, 22, 445]:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -99,7 +100,7 @@ def ping_host(ip: str, timeout: float = 1.0) -> bool:
     return False
 
 def scan_port(ip: str, port: int, timeout: float = 1.0) -> dict | None:
-    """Scan un port et tente de récupérer une bannière."""
+    """Scan un port TCP et récupère la bannière de service."""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(timeout)
@@ -118,17 +119,27 @@ def scan_port(ip: str, port: int, timeout: float = 1.0) -> dict | None:
     except: pass
     return None
 
-def detect_os(ip: str) -> str:
-    """Heuristique TTL simplifiée."""
+def detect_os(ip: str, open_ports: list) -> str:
+    """Détection d'OS améliorée : croisement du TTL et des ports ouverts."""
+    # 1. Analyse par ports spécifiques (très fiable pour Windows)
+    port_nums = [p["port"] for p in open_ports]
+    windows_indicators = {135, 139, 445, 3389}
+    
+    if any(p in windows_indicators for p in port_nums):
+        return "🪟 Windows (via Services)"
+
+    # 2. Heuristique par TTL
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(1.0)
-            s.connect_ex((ip, 80)) # Port générique pour forcer le paquet
+            # On tente une connexion sur un port ouvert pour obtenir le TTL du paquet retour
+            test_port = port_nums[0] if port_nums else 80
+            s.connect_ex((ip, test_port))
             ttl = s.getsockopt(socket.IPPROTO_IP, socket.IP_TTL)
             if ttl <= 64: return "🐧 Linux/macOS"
             if ttl <= 128: return "🪟 Windows"
             return "🔌 Network Device"
-    except: return "❓ Unknown"
+    except: return "❓ Indéterminé"
 
 # ──────────────────────────────────────────────────────────────
 # Affichage du Rapport
@@ -152,15 +163,22 @@ def print_pretty_report(results):
     
     print(f"\n{C.BOLD}{C.CYAN}📊 Résumé du scan : {len(results)} hôte(s) trouvé(s).{C.RESET}\n")
 
+# ──────────────────────────────────────────────────────────────
+# Point d'entrée principal
+# ──────────────────────────────────────────────────────────────
+
 def main():
     parser = argparse.ArgumentParser(description="PyNet-Scanner Pro")
-    parser.add_argument("-t", "--target", required=True, help="Cible IP ou CIDR")
-    parser.add_argument("-p", "--ports", default="common", help="Ports (ex: 22,80 or 1-1000)")
-    parser.add_argument("--threads", type=int, default=100)
-    parser.add_argument("--json", action="store_true")
+    parser.add_argument("-t", "--target", required=True, help="IP unique ou plage CIDR (ex: 192.168.1.0/24)")
+    parser.add_argument("-p", "--ports", default="common", help="Ports (ex: 22,80 ou 1-1024)")
+    parser.add_argument("--threads", type=int, default=100, help="Nombre de threads (défaut: 100)")
+    parser.add_argument("--timeout", type=float, default=1.0, help="Timeout par port (défaut: 1.0)")
+    parser.add_argument("--json", action="store_true", help="Sortie au format JSON")
+    parser.add_argument("--no-discovery", action="store_true", help="Passer directement au scan de ports")
+    parser.add_argument("--no-color", action="store_true", help="Désactiver les couleurs")
     args = parser.parse_args()
 
-    if args.json: C.disable()
+    if args.json or args.no_color: C.disable()
     else: print(BANNER)
 
     # Parsing des ports
@@ -172,39 +190,51 @@ def main():
 
     start_time = time.time()
     
-    # Discovery
-    net_hosts = [str(ip) for ip in ipaddress.ip_network(args.target, strict=False).hosts()] if "/" in args.target else [args.target]
-    active_hosts = []
-    
-    prog_disc = Progress(len(net_hosts), "Discovery")
-    with ThreadPoolExecutor(max_workers=args.threads) as executor:
-        futures = {executor.submit(ping_host, ip): ip for ip in net_hosts}
-        for f in as_completed(futures):
-            prog_disc.increment()
-            if f.result(): active_hosts.append(futures[f])
-
-    if not active_hosts:
-        print(f"{C.RED}[!] Aucun hôte en ligne.{C.RESET}")
+    # Étape 1 : Découverte
+    try:
+        net_hosts = [str(ip) for ip in ipaddress.ip_network(args.target, strict=False).hosts()] if "/" in args.target else [args.target]
+    except ValueError as e:
+        print(f"{C.RED}[!] Erreur de cible : {e}{C.RESET}")
         return
 
-    # Scanning
+    active_hosts = []
+    if args.no_discovery:
+        active_hosts = net_hosts
+    else:
+        prog_disc = Progress(len(net_hosts), "Discovery")
+        with ThreadPoolExecutor(max_workers=args.threads) as executor:
+            futures = {executor.submit(ping_host, ip, args.timeout): ip for ip in net_hosts}
+            for f in as_completed(futures):
+                prog_disc.increment()
+                if f.result(): active_hosts.append(futures[f])
+
+    if not active_hosts:
+        print(f"{C.RED}[!] Aucun hôte actif détecté.{C.RESET}")
+        return
+
+    # Étape 2 : Scan de ports
     final_results = []
     for ip in active_hosts:
         prog_scan = Progress(len(target_ports), f"Scan {ip}")
-        host_data = {"ip": ip, "hostname": "", "os_guess": detect_os(ip), "open_ports": []}
+        host_data = {"ip": ip, "hostname": "", "open_ports": []}
+        
+        # Résolution Hostname
         try: host_data["hostname"] = socket.gethostbyaddr(ip)[0]
         except: pass
         
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
-            futures = {executor.submit(scan_port, ip, p): p for p in target_ports}
+            futures = {executor.submit(scan_port, ip, p, args.timeout): p for p in target_ports}
             for f in as_completed(futures):
                 prog_scan.increment()
                 res = f.result()
                 if res: host_data["open_ports"].append(res)
         
         host_data["open_ports"].sort(key=lambda x: x["port"])
+        # Détection d'OS basée sur les résultats du scan
+        host_data["os_guess"] = detect_os(ip, host_data["open_ports"])
         final_results.append(host_data)
 
+    # Étape 3 : Sortie
     if args.json:
         print(json.dumps(final_results, indent=2))
     else:
