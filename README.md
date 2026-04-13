@@ -1,62 +1,58 @@
-# 🔍 Mini Network Scanner
+# PyNet-Scanner Pro
 
-> Scanner réseau minimaliste développé pour des labs de sécurité offensive.  
-> Reproduit les fonctionnalités essentielles de Nmap — **sans aucune dépendance externe**.
+> Scanner réseau haute performance développé pour les labs de sécurité offensive.  
+> Python 3 · Aucune dépendance · Kali Linux ready
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Kali-557C94?style=flat-square&logo=kalilinux&logoColor=white)
+![Version](https://img.shields.io/badge/Version-2.1-00bcd4?style=flat-square)
 ![Category](https://img.shields.io/badge/Category-Reconnaissance-e74c3c?style=flat-square)
-![License](https://img.shields.io/badge/License-Educational%20Use-orange?style=flat-square)
 ![Dependencies](https://img.shields.io/badge/Dependencies-none-2ecc71?style=flat-square)
+
+```
+  _____                _   _      _
+ |  __ \              | \ | |    | |
+ | |__) |   _ _ __    |  \| | ___| |_
+ |  ___/ | | | '_ \   | . ` |/ _ \ __|
+ | |   | |_| | | | |  | |\  |  __/ |_
+ |_|    \__, |_| |_|  |_| \_|\___|\__|
+          __/ |        Network Scanner Pro
+         |___/         v2.1 - Security Labs
+```
 
 ---
 
-## 📋 Description
+## Description
 
-Outil de reconnaissance réseau en Python pur, conçu pour des environnements de pentest et CTF. Il offre une alternative légère à Nmap pour les scénarios où seul Python est disponible.
+Scanner réseau en Python pur conçu pour des environnements de pentest et CTF. Offre une alternative légère à Nmap pour les scénarios où seul Python est disponible, avec une interface terminal soignée et une détection d'OS croisée.
 
-**Fonctionnalités principales :**
+**Fonctionnalités :**
 
-- 🌐 **Découverte d'hôtes** — ping sweep TCP sur plage CIDR
-- ⚡ **Scan TCP multi-threadé** — jusqu'à 200+ threads simultanés
-- 🏷️ **Banner grabbing** — identification de services par signature
-- 🖥️ **Fingerprinting OS** — heuristique basée sur le TTL
+- 🌐 **Découverte d'hôtes** — ping sweep TCP multi-threadé sur plage CIDR
+- ⚡ **Scan TCP haute performance** — jusqu'à 200+ threads simultanés
+- 🏷️ **Banner grabbing** — identification de services par réponse brute
+- 🖥️ **Détection OS avancée** — croisement TTL + heuristique par ports
 - 🔎 **Résolution DNS inverse** — hostname pour chaque hôte actif
+- 📊 **Barre de progression en temps réel** — affichage pourcentage + phase
+- 🎨 **Couleurs 256 ANSI** — rapport coloré par type de service
 - 📤 **Export JSON** — intégration dans des pipelines d'audit
 
 ---
 
-## 📁 Structure du projet
-
-```
-network-scanner/
-├── README.md                ← ce fichier
-├── Rapport_scanner.pdf      ← rapport technique complet
-└── network_scanner.py       ← script principal
-```
-
----
-
-## ⚙️ Installation & Utilisation
-
-### Prérequis
-
-```bash
-python3 --version   # 3.10+ requis — aucune installation supplémentaire
-```
-
-### Cloner le dépôt
+## Installation
 
 ```bash
 git clone https://github.com/Maxime288/network-scanner.git
 cd network-scanner
-python3 network_scanner.py --help
+python3 --version   # 3.10+ requis — aucune dépendance supplémentaire
 ```
 
-### Commandes
+---
+
+## Utilisation
 
 ```bash
-# Scan basique — ports courants
+# Scan basique (ports courants)
 python3 network_scanner.py -t 192.168.1.1
 
 # Scan d'un réseau entier
@@ -64,92 +60,100 @@ python3 network_scanner.py -t 192.168.1.0/24
 
 # Plage de ports personnalisée
 python3 network_scanner.py -t 192.168.1.1 -p 1-1024
-python3 network_scanner.py -t 192.168.1.1 -p 22,80,443,3306,8080
+python3 network_scanner.py -t 192.168.1.1 -p 22,80,443,3306
 
 # Export JSON
 python3 network_scanner.py -t 192.168.1.1 --json > result.json
 
-# Scan agressif (sudo recommandé sur Kali)
-sudo python3 network_scanner.py -t 10.0.0.0/24 -p 1-1024 --threads 200 --timeout 0.5
-
-# Ignorer le ping sweep (scan direct)
+# Scan rapide sans discovery (cible directe)
 python3 network_scanner.py -t 192.168.1.1 --no-discovery -p common
+
+# Mode silencieux (sans couleurs ANSI)
+python3 network_scanner.py -t 192.168.1.1 --no-color
 ```
 
 ### Paramètres
 
 | Paramètre | Défaut | Description |
 |---|---|---|
-| `-t` / `--target` | *(requis)* | IP unique ou plage CIDR (ex: `192.168.1.0/24`) |
-| `-p` / `--ports` | `common` | `1-1024`, `80,443`, `common` |
-| `--threads` | `100` | Nombre de threads parallèles |
+| `-t` / `--target` | *(requis)* | IP unique ou plage CIDR |
+| `-p` / `--ports` | `common` | `1-1024`, `22,80,443`, `common` |
+| `--threads` | `100` | Threads parallèles |
 | `--timeout` | `1.0` | Timeout par port (secondes) |
-| `--json` | `False` | Sortie au format JSON |
-| `--no-discovery` | `False` | Ignorer le ping sweep initial |
+| `--json` | `False` | Sortie JSON brute |
+| `--no-discovery` | `False` | Ignorer le ping sweep |
+| `--no-color` | `False` | Désactiver les couleurs ANSI |
 
 ---
 
-## 🖥️ Exemple de sortie
+## Exemple de sortie
 
 ```
-═════════════════════════════════════════════════════════════════
-  RAPPORT DE SCAN RÉSEAU
-═════════════════════════════════════════════════════════════════
+  _____                _   _      _
+ |  __ \              | \ | |    | |
+ | |__) |   _ _ __    |  \| | ___| |_
+ |  ___/ | | | '_ \   | . ` |/ _ \ __|
+ | |   | |_| | | | |  | |\  |  __/ |_
+ |_|    \__, |_| |_|  |_| \_|\___|\__|
+          __/ |        Network Scanner Pro
+         |___/         v2.1 - Security Labs
 
-  Hôte   : 192.168.1.1  (router.local)
-  OS     : Linux/macOS (TTL≤64)
-  Scanné : 2025-04-13T14:32:01
+  Discovery       ▕━━━━━━━━━━━━━━━━━━━━▏ 100%
+  Scan 192.168.1.1▕━━━━━━━━━━━━━━━━━━━━▏ 100%
 
-  PORT     SERVICE            LATENCE  BANNER
-  ────────────────────────────────────────────────────────────
-  22       SSH                  3.2ms  SSH-2.0-OpenSSH_9.2p1
-  80       HTTP                 1.8ms  HTTP/1.1 200 OK
-  443      TLS/SSL              2.1ms
-  3306     MySQL                5.1ms
+  IP: 192.168.1.1
+  Hostname : router.local
+  OS Guess : 🐧 Linux/macOS
+  ─────────────────────────────────────────────────────────────────
+  PORT     SERVICE         LATENCE    BANNER
+  22       SSH               3.2ms    » SSH-2.0-OpenSSH_9.2p1
+  80       HTTP              1.8ms    » HTTP/1.1 200 OK
+  443      HTTPS             2.1ms
+  3306     MySQL             5.1ms
 
-═════════════════════════════════════════════════════════════════
-  Résumé : 1 hôte(s) scanné(s), 4 port(s) ouvert(s)
-═════════════════════════════════════════════════════════════════
+📊 Résumé du scan : 1 hôte(s) trouvé(s).
+Terminé en 2.14s
 ```
 
 ---
 
-## 🔬 Comparaison avec Nmap
+## Détection d'OS
 
-| Fonctionnalité | Ce script | Nmap |
+La détection repose sur deux méthodes croisées :
+
+1. **Heuristique par ports** — présence de ports Windows spécifiques (135, 139, 445, 3389) → identification immédiate sans ambiguïté
+2. **TTL fingerprinting** — lecture du TTL du paquet retour via `getsockopt` : ≤ 64 → Linux/macOS, ≤ 128 → Windows, > 128 → équipement réseau
+
+---
+
+## Comparaison avec Nmap
+
+| Fonctionnalité | PyNet-Scanner | Nmap |
 |---|:---:|:---:|
 | Découverte d'hôtes TCP | ✅ | ✅ |
 | Scan TCP connect | ✅ | ✅ |
-| Banner grabbing | ✅ basique | ✅ avancé |
-| Détection OS (TTL) | ✅ heuristique | ✅ fingerprinting complet |
+| Banner grabbing | ✅ | ✅ avancé |
+| Détection OS (TTL + ports) | ✅ | ✅ fingerprinting complet |
 | Résolution DNS inverse | ✅ | ✅ |
-| Export JSON natif | ✅ | ⚙️ (via `-oJ`) |
+| Export JSON natif | ✅ | ⚙️ via `-oJ` |
+| Bannière ASCII + couleurs 256 | ✅ | ❌ |
+| Barre de progression | ✅ | ❌ |
 | Scan SYN furtif | ❌ | ✅ |
 | Scan UDP | ❌ | ✅ |
-| Détection de versions | ❌ | ✅ |
 | Scripts NSE | ❌ | ✅ |
 | Dépendances externes | ❌ **aucune** | binaire natif |
 
 ---
 
-## 🏗️ Architecture technique
+## Architecture
 
 Le script s'appuie exclusivement sur la bibliothèque standard Python :
 
-- **`socket`** — connexions TCP, banner grabbing, TTL
-- **`ipaddress`** — parsing et enumération des plages CIDR
-- **`concurrent.futures.ThreadPoolExecutor`** — parallélisme du scan
-- **`argparse`** — interface en ligne de commande
+- **`socket`** — connexions TCP, banner grabbing, TTL via `getsockopt`
+- **`ipaddress`** — parsing et énumération des plages CIDR
+- **`concurrent.futures.ThreadPoolExecutor`** — parallélisme du scan et du ping sweep
+- **`argparse`** — interface CLI complète
 - **`json`** — sérialisation des résultats
-
-La détection de service repose sur une table de signatures binaires (`SERVICE_SIGNATURES`) comparées aux premiers octets de la réponse brute. La découverte d'hôtes utilise un TCP connect sweep sur les ports 22, 80, 443 et 8080.
-
----
-
-## 📄 Documentation
-
-Le rapport technique complet est disponible dans [`Rapport_scanner.pdf`](Rapport_scanner.pdf).  
-Il couvre l'architecture, les choix d'implémentation, les performances mesurées et les pistes d'évolution.
 
 ---
 
